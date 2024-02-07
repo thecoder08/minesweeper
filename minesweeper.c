@@ -1,5 +1,5 @@
 #include <xgfx/drawing.h>
-#include <xgfx/window-wl.h>
+#include <xgfx/window.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -35,15 +35,6 @@ void paint() {
     }
 }
 
-void keychange(unsigned int key, unsigned int state) {
-
-}
-
-void pointermotion(int pointerX, int pointerY) {
-    cellX = pointerX/40;
-    cellY = pointerY/40;
-}
-
 void findSurroundingMines(int x, int y) {
     // count mines around current cell
     int mineCount = 0;
@@ -75,7 +66,7 @@ void pointerbutton(unsigned int button, unsigned int state) {
     if (done) {
         return;
     }
-    if (button == 272 && state == 1 && cells[cellY*16+cellX] == 10) {
+    if (button == 1 && state == 1 && cells[cellY*16+cellX] == 10) {
         if (mines[cellY*16+cellX]) {
             for (int i = 0; i < 192; i++) {
                 if (mines[i]) {
@@ -103,7 +94,7 @@ void pointerbutton(unsigned int button, unsigned int state) {
             return;
         }
     }
-    if (button == 273 && state == 1) {
+    if (button == 3 && state == 1) {
         if (cells[cellY*16+cellX] == 10) {
             cells[cellY*16+cellX] = 9;
         }
@@ -128,9 +119,22 @@ int main() {
     }
     read(texturesFd, textures, 76800);
     close(texturesFd);
-    initWindow(640, 480, "Minesweeper", paint, keychange, pointermotion, pointerbutton);
-    while (dispatchEvents() != -1) {
-
+    initWindow(640, 480, "Minesweeper");
+    while(1) {
+        Event event;
+        while (checkWindowEvent(&event)) {
+            if (event.type == WINDOW_CLOSE) {
+                return 0;
+            }
+            if (event.type == MOUSE_MOVE) {
+                cellX = event.mousemove.x/40;
+                cellY = event.mousemove.y/40;
+            }
+            if (event.type == MOUSE_BUTTON) {
+                pointerbutton(event.mousebutton.button, event.mousebutton.state);
+            }
+        }
+        paint();
+        updateWindow();
     }
-    return 0;
 }
